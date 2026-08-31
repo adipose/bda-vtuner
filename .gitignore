@@ -1,0 +1,37 @@
+*.obj
+*.sys
+*.pdb
+*.cat
+*.lib
+*.exp
+*.ilk
+obj*/
+x64/
+Debug/
+Release/
+.vs/
+*.user
+*.log
+*.tlog
+*.aps
+third_party/bin/
+
+
+# Loose screenshots from deploy and scan runs. Result artefacts are
+# regenerated, not archived -- see docs/verification-checklist.md.
+build/*.png
+
+# Generated subtitle assets. New-MatrixStreams.ps1 builds them on demand from
+# New-DvbSubtitle.ps1; a binary blob in the tree is one more thing that can
+# drift from the code that produced it.
+assets/*.dvbsub
+
+# Per-machine test bed configuration; testbed.sample.psd1 is the committed template.
+testbed.config.psd1
+docs/evidence/*.png
+
+# Internal session-to-session working notes; engineering history, not user docs.
+docs/mpc-hc-*.md
+
+# Generated registry maps; Provision-VTuner.ps1 emits them per run.
+build/*.reg

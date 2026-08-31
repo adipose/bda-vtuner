@@ -1,0 +1,80 @@
+{
+  "Region": {
+    "X": 72,
+    "Y": 440,
+    "Width": 576,
+    "Height": 96
+  },
+  "ProbePoints": [
+    {
+      "Cell": 0,
+      "Colour": "Teal",
+      "X": 120,
+      "Y": 514,
+      "Expected": {
+        "R": 0,
+        "G": 128,
+        "B": 128
+      }
+    },
+    {
+      "Cell": 1,
+      "Colour": "SaddleBrown",
+      "X": 216,
+      "Y": 514,
+      "Expected": {
+        "R": 139,
+        "G": 69,
+        "B": 19
+      }
+    },
+    {
+      "Cell": 2,
+      "Colour": "SlateBlue",
+      "X": 312,
+      "Y": 514,
+      "Expected": {
+        "R": 106,
+        "G": 90,
+        "B": 205
+      }
+    },
+    {
+      "Cell": 3,
+      "Colour": "DeepPink",
+      "X": 408,
+      "Y": 514,
+      "Expected": {
+        "R": 255,
+        "G": 20,
+        "B": 147
+      }
+    },
+    {
+      "Cell": 4,
+      "Colour": "SpringGreen",
+      "X": 504,
+      "Y": 514,
+      "Expected": {
+        "R": 0,
+        "G": 255,
+        "B": 127
+      }
+    },
+    {
+      "Cell": 5,
+      "Colour": "MidnightBlue",
+      "X": 600,
+      "Y": 514,
+      "Expected": {
+        "R": 25,
+        "G": 25,
+        "B": 112
+      }
+    }
+  ],
+  "Bytes": 19750,
+  "RepeatCount": 5,
+  "SetBytes": 3950,
+  "Text": "bda-vtuner matrix"
+}
