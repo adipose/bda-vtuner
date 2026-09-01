@@ -100,16 +100,18 @@ function Enter-RigClaim {
         # guest another session had claimed legitimately. The named-guest
         # path now at least refuses when the broker says the guest is someone
         # else's; a caller who truly must override can rig-release first.
+        $holder = $null; $me = $null; $brokerAnswered = $false
         try {
-            $holder = (Get-RigClaims -CtlPath $CtlPath | Where-Object { $_.guest -eq $VMName }).session
+            $row = Get-RigClaims -CtlPath $CtlPath | Where-Object { $_.guest -eq $VMName }
+            if ($row -and $row.PSObject.Properties['session']) { $holder = $row.session }
             $me = Get-BrokerSession -CtlPath $CtlPath
-            if ($holder -and $holder -ne $me) {
-                throw ("cannot use $VMName directly: the broker says '$holder' holds it. An unclaimed run on " +
-                       "a claimed guest is invisible contamination -- exactly what claiming exists to prevent. " +
-                       "Wait, or ask them.")
-            }
-        } catch [System.Management.Automation.RuntimeException] { throw }
-          catch { Write-Verbose "broker unreachable; proceeding on $VMName as a hand-driven rig" }
+            $brokerAnswered = $true
+        } catch { Write-Verbose "broker unreachable; proceeding on $VMName as a hand-driven rig" }
+        if ($brokerAnswered -and $holder -and $holder -ne $me) {
+            throw ("cannot use $VMName directly: the broker says '$holder' holds it. An unclaimed run on " +
+                   "a claimed guest is invisible contamination -- exactly what claiming exists to prevent. " +
+                   "Wait, or ask them.")
+        }
         Write-Verbose "using $VMName directly; not claiming"
         return [pscustomobject]@{ Guest = $VMName; Claimed = $false; Since = $null }
     }
@@ -163,7 +165,10 @@ function Exit-RigClaim {
     param([Parameter(Mandatory)] $Claim, [string] $CtlPath = $script:BrokerCtl)
 
     if (-not $Claim.Claimed) { return }
-    try   { $r = Invoke-RigBroker -Verb 'rig-release' -CtlPath $CtlPath; Write-Verbose $r.outcome }
+    try {
+        $r = Invoke-RigBroker -Verb 'rig-release' -CtlPath $CtlPath
+        if ($r.PSObject.Properties['outcome']) { Write-Verbose $r.outcome }
+    }
     catch { Write-Warning "could not release $($Claim.Guest): $($_.Exception.Message)" }
 }
 
@@ -173,7 +178,8 @@ function Get-BrokerSession {
         This session's name, as the broker knows it.
     #>
     [CmdletBinding()] param([string] $CtlPath = $script:BrokerCtl)
-    (Invoke-RigBroker -Verb 'whoami' -CtlPath $CtlPath).session
+    $r = Invoke-RigBroker -Verb 'whoami' -CtlPath $CtlPath
+    if ($r.PSObject.Properties['session']) { $r.session } else { $null }
 }
 
 function Get-FanOutTargets {
