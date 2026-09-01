@@ -25,17 +25,25 @@ against the same driver, streams and transport seam.
 
 The path from clone to a scanning tuner, in order. Prerequisites: a Windows
 host with PowerShell 7+, a disposable Windows 10 x64 guest/target machine
-(a VM with a checkpoint is ideal), the WDK 7600 ISO (`GRMWDK_EN_7600_1.ISO`
--- no longer distributed by Microsoft; obtainable from archive sources), and
-an MPC-HC build (https://github.com/clsid2/mpc-hc).
+(a VM with a checkpoint is ideal) and an MPC-HC build
+(https://github.com/clsid2/mpc-hc).
 
-1. **Configure the transport.** Copy `testbed.sample.psd1` to
-   `testbed.config.psd1` and point it at your target (see *Where it runs*).
+1. **Fetch and configure everything host-side:**
+   `.\tools\Install-TestBed.ps1`. Downloads the WDK 7600 ISO
+   (`GRMWDK_EN_7600_1.ISO`, SHA256-verified, from Microsoft's still-live
+   [direct link](https://download.microsoft.com/download/4/A/2/4A25C7D5-EFBE-4182-B6A9-AE6850409A78/GRMWDK_EN_7600_1.ISO),
+   falling back to an archive.org mirror publishing the same hash), extracts
+   the WDK installer media, fetches the pinned TSDuck build, installs ffmpeg
+   via winget, and creates `testbed.config.psd1` from the sample. Then edit
+   the config to point at your target (see *Where it runs*) and stage the
+   WDK media: `.\tools\Install-TestBed.ps1 -Target <name>` (hyperv:
+   attaches the ISO as a DVD; winrm/local: copies the media to
+   `C:\vtuner\wdk-media`).
 2. **Build, sign, install the driver** -- one command, phases end to end:
-   `.\tools\Build-And-Deploy.ps1 -VMName <target> -Standard DVBT -Phase
-   Source,Build,Sign,Install,Verify`. This installs the build toolchain on
-   the target from the WDK ISO, builds there, test-signs, installs the
-   device, and verifies it enumerates. Repeat with `-Standard ATSC/DVBC/DVBS`
+   `.\tools\Build-And-Deploy.ps1 -VMName <target> -Standard DVBT`. This
+   installs the build toolchain on the target from the staged WDK media,
+   builds there, test-signs, installs the device, and verifies it
+   enumerates. Repeat with `-Standard ATSC/DVBC/DVBS`
    for more tuners (each needs its own `-DeviceInstanceId`).
 3. **Generate streams:** `.\tools\New-TestStreams.ps1 -OutDir C:\ts-gen
    -Standard DVBT` (self-describing colour channels), and/or
@@ -231,6 +239,7 @@ src/MergedDevice/     the digital BDA tuner driver (pristine WDK 7600)
   BDA*Tuner/          per-standard sources + INF templates + frequency maps
 src/analogtuner/      analog variant (unused)
 tools/
+  Install-TestBed.ps1    downloads and verifies all prerequisites (WDK ISO, TSDuck, ffmpeg), creates the config
   Build-And-Deploy.ps1   build, sign, install, verify — end to end
   Provision-VTuner.ps1   maps a .ts library onto a frequency plan, emits/applies the registry tree
   Install-VTuner.ps1     devcon install, DeviceInstanceID wiring, stream map import
@@ -272,9 +281,10 @@ a driver fault bugchecks the machine and the dump is where the answer is.
 Drive everything from a host; build, sign and run on a separate, disposable
 target. Two requirements, not preferences:
 
-- **The WDK 7600 ISO must be available to the target.** The canonical
-  pipeline (`Build-And-Deploy.ps1`) installs the toolchain on the target from
-  the ISO and builds there; the host needs only PowerShell.
+- **The WDK 7600 installer media must be available to the target** --
+  `Install-TestBed.ps1` downloads the ISO and stages it (`-Target`). The
+  canonical pipeline (`Build-And-Deploy.ps1`) installs the toolchain on the
+  target from that media and builds there; the host needs only PowerShell.
   (`Deploy-ToVM.ps1` is the older host-built variant, kept for reference.)
 - **Never load the driver on a machine you are not prepared to lose.** A
   kernel driver fault takes down whatever loaded it, so the target must be
@@ -361,9 +371,9 @@ The emulator generates its own transport streams; the tools are vendored in
 ### TSDuck (`third_party/tsduck`, BSD 2-Clause)
 
 The scripts run TSDuck's portable Windows build, which is not committed:
-download a `TSDuck-Win64-<version>-Portable.zip` from
-https://github.com/tsduck/tsduck/releases (developed against 3.44) and
-extract it so that `third_party/bin/tsduck/TSDuck/bin/tsp.exe` exists. Every
+`Install-TestBed.ps1` downloads the pinned release (3.44) from
+https://github.com/tsduck/tsduck/releases and lays it out so that
+`third_party/bin/tsduck/TSDuck/bin/tsp.exe` exists. Every
 script that needs it checks that path (override with `-TsduckBin`) and names
 it in its error if absent. The `third_party/tsduck` submodule is the source,
 kept for provenance.

@@ -114,10 +114,10 @@ if ((Get-TestBedConfig).Transport -eq 'hyperv') {
         throw "Secure Boot is on for '$VMName', which blocks test signing. Stop-VM $VMName; Set-VMFirmware $VMName -EnableSecureBoot Off; Start-VM $VMName"
     }
 }
-if (-not (Test-Path $CredentialPath)) { throw "Credential not found: $CredentialPath" }
+if ($CredentialPath -and -not (Test-Path $CredentialPath)) { throw "Credential not found: $CredentialPath" }
 
-$cred = Import-Clixml $CredentialPath
-Write-Host "Connecting to $VMName as $($cred.UserName) ..." -ForegroundColor Cyan
+$who = if ($CredentialPath) { (Import-Clixml $CredentialPath).UserName } else { 'the configured credential' }
+Write-Host "Connecting to $VMName as $who ..." -ForegroundColor Cyan
 $session = Connect-TestGuest -Guest $VMName -CredentialPath $CredentialPath
 
 try {

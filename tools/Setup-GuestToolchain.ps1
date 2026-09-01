@@ -21,7 +21,9 @@
     file you needed.
 
 .PARAMETER IsoDrive
-    Drive letter of the mounted WDK ISO in the guest. Auto-detected if omitted.
+    Drive letter of the mounted WDK ISO in the guest, or a directory
+    holding the extracted media (a WDK\ subdirectory of MSIs). Omitted:
+    C:\vtuner\wdk-media is probed first, then mounted DVD drives.
 
 .PARAMETER InstallRoot
     Where the WDK lands. The default matches the kit's own convention.
@@ -42,13 +44,19 @@ $ErrorActionPreference = 'Stop'
 # --- Locate the ISO --------------------------------------------------------
 
 if (-not $IsoDrive) {
-    $dvd = Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=5' |
-           Where-Object { $_.DeviceID -and (Test-Path "$($_.DeviceID)\WDK\headers.msi") } |
-           Select-Object -First 1
-    if (-not $dvd) {
-        throw 'No mounted WDK ISO found. Attach it from the host with: Add-VMDvdDrive -VMName <vm> -Path <iso>'
+    # Staged media first (Install-TestBed.ps1 -Target copies it here on
+    # transports without a DVD drive), then any mounted WDK ISO.
+    if (Test-Path 'C:\vtuner\wdk-media\WDK\headers.msi') {
+        $IsoDrive = 'C:\vtuner\wdk-media'
+    } else {
+        $dvd = Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=5' |
+               Where-Object { $_.DeviceID -and (Test-Path "$($_.DeviceID)\WDK\headers.msi") } |
+               Select-Object -First 1
+        if (-not $dvd) {
+            throw 'No WDK media found. Stage it with Install-TestBed.ps1 -Target <name>, or attach the ISO: Add-VMDvdDrive -VMName <vm> -Path <iso>'
+        }
+        $IsoDrive = $dvd.DeviceID
     }
-    $IsoDrive = $dvd.DeviceID
 }
 $wdk = Join-Path $IsoDrive 'WDK'
 if (-not (Test-Path $wdk)) { throw "No WDK directory on $IsoDrive" }

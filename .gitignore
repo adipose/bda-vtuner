@@ -35,3 +35,7 @@ docs/mpc-hc-*.md
 
 # Generated registry maps; Provision-VTuner.ps1 emits them per run.
 build/*.reg
+
+# Downloaded WDK ISO and extracted installer media; Install-TestBed.ps1
+# fetches and hash-verifies them on demand.
+third_party/iso/
