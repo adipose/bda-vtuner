@@ -21,8 +21,9 @@
       FFmpeg  Install ffmpeg via winget if it is not already resolvable.
       Config  Create testbed.config.psd1 from testbed.sample.psd1 if no
               config exists anywhere in the transport's upward search path.
-              In a submodule checkout (mpc-hc-tests) the config is created at
-              the superproject root, which the transport finds first.
+              In a submodule checkout (e.g. the MPC-HC test framework) the
+              config is created at the superproject root, which the
+              transport finds first.
       Verify  Re-check every artefact and summarise; exits non-zero if
               anything is missing.
 

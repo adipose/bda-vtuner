@@ -34,7 +34,7 @@ standard, about 6 MB each.
 
 ## Expected scan results
 
-The mpc-hc-tests dvb suite reads MPC-HC's channel list rather than the screen;
+The MPC-HC test framework's dvb suite reads MPC-HC's channel list rather than the screen;
 records are `CBDAChannel::ToString()`. The fields shown are name, frequency,
 bandwidth and symbol rate; a correct setup reproduces these exactly.
 

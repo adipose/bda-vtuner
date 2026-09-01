@@ -55,9 +55,10 @@ host with PowerShell 7+, a disposable Windows 10 x64 guest/target machine
 5. **Prepare the player** (see *Preparing the guest* below): MPC-HC at
    `C:\mpc-hc\mpc-hc64.exe` with its `LAVFilters64` directory beside it.
 6. **Scan.** Manually: open MPC-HC, Options > Playback > Capture, pick the
-   tuner, Ctrl+V, Scan. Scripted: use the **mpc-hc-tests** superproject,
-   which holds this repository and MPC-HC as submodules and carries the scan
-   harness, decode assertions and frame probes.
+   tuner, Ctrl+V, Scan. Scripted: use the MPC-HC test framework (`tests/`
+   on the `test-framework` branch of https://github.com/adipose/mpc-hc),
+   which pins this repository as a submodule and carries the scan harness,
+   decode assertions and frame probes.
 
 ## Preparing the guest
 
@@ -190,7 +191,7 @@ above it.
 After MPC-HC tears down a filter graph the tuner stops locking, and every later
 scan finds zero channels — while the device still reports `Status: OK` and the
 frequency still reports locked. Cycling the device clears it, which is why
-the mpc-hc-tests dvb suite does so before every run.
+the test framework's dvb suite does so before every run.
 
 The tell, without needing a reboot to confirm, is in the scan's progress trace:
 locking onto real muxes shows as multi-second gaps, one per mux, while a wedged
@@ -256,11 +257,11 @@ tools/
   RigClaim.ps1, RigLock.ps1  optional multi-guest pooling and locking
 ```
 
-MPC-HC-specific — nothing, by design. The MPC-HC test harness lives in the
-**mpc-hc-tests** superproject, which pins this repository and MPC-HC as
-submodules and asserts the player against this repository's streams and
-`encoding-matrix.psd1` (whose expected-classification columns document the
-consumer under test).
+MPC-HC-specific — nothing, by design. The MPC-HC test framework lives in
+the MPC-HC tree itself (`tests/` on the `test-framework` branch of the
+fork), pins this repository as a submodule, and asserts the player against
+this repository's streams and `encoding-matrix.psd1` (whose
+expected-classification columns document the consumer under test).
 
 ## Signing
 
