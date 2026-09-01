@@ -107,10 +107,19 @@ function Enter-RigClaim {
             $me = Get-BrokerSession -CtlPath $CtlPath
             $brokerAnswered = $true
         } catch { Write-Verbose "broker unreachable; proceeding on $VMName as a hand-driven rig" }
-        if ($brokerAnswered -and $holder -and $holder -ne $me) {
-            throw ("cannot use $VMName directly: the broker says '$holder' holds it. An unclaimed run on " +
-                   "a claimed guest is invisible contamination -- exactly what claiming exists to prevent. " +
-                   "Wait, or ask them.")
+        if ($brokerAnswered -and $holder) {
+            if ($me -and $holder -ne $me) {
+                throw ("cannot use $VMName directly: the broker says '$holder' holds it. An unclaimed run on " +
+                       "a claimed guest is invisible contamination -- exactly what claiming exists to prevent. " +
+                       "Wait, or ask them.")
+            }
+            if (-not $me) {
+                # The broker cannot identify this process (detached ancestry),
+                # so it cannot vouch either way. The caller explicitly named a
+                # guest -- the normal shape for a run delegated under a claim
+                # taken in an identifiable shell -- so proceed, saying so.
+                Write-Warning "the broker cannot identify this process; proceeding on $VMName under '$holder''s claim -- ensure that claim is yours"
+            }
         }
         Write-Verbose "using $VMName directly; not claiming"
         return [pscustomobject]@{ Guest = $VMName; Claimed = $false; Since = $null }
