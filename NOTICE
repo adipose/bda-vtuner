@@ -1,0 +1,18 @@
+This repository is released under the MIT License (see LICENSE), with one
+component of separate provenance:
+
+  src/  is derived from the "swtuner" sample of the Windows Driver Kit 7.1.0
+        (WDK 7600.16385, GRMWDK_EN_7600_1.ISO), Copyright (c) Microsoft
+        Corporation. The first commit of this repository is the pristine
+        extraction; every later change to src/ is a diff against it.
+
+Microsoft's sample code is redistributed here, modified, under the sample
+code terms of the Windows Driver Kit licence, which permit modifying,
+copying and distributing code marked as sample. Microsoft's copyright
+notices in those files are retained unaltered, as those terms require. The
+MIT License above applies to the modifications and to everything outside
+src/; it does not relicense Microsoft's original code.
+
+The WDK itself, TSDuck and FFmpeg are not part of this repository. They are
+fetched by tools/Install-TestBed.ps1 from their publishers under their own
+licences (see the README, "Stream authoring").

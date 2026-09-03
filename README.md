@@ -119,6 +119,9 @@ This sample was dropped from WDK 8 onward and is **not** in
 The first commit is the pristine extraction, so every port change is a diff
 against Microsoft's original.
 
+This repository is MIT-licensed (`LICENSE`); `src/` is redistributed under
+the WDK's sample-code terms with Microsoft's notices intact (`NOTICE`).
+
 The sample source covers ATSC, DVB-T, DVB-C, DVB-S, QAM, ISDB-T/S, DMB-TH
 and PBDA variants, plus a separate analog tuner (`src/analogtuner`). The four
 named throughout this README (DVB-T, ATSC, DVB-C, DVB-S) are the ported,
