@@ -32,4 +32,20 @@
     # The account logged on at the target's console (MPC-HC runs on its
     # desktop; some tasks must name it explicitly).
     GuestConsoleUser = 'YourGuestUser'
+
+    # The checkpoint Restore-TestGuest restores a guest to before a run.
+    # Optional; '' or absent means no default.
+    Checkpoint = ''
+
+    # Optional per-guest overrides for a pool whose guests differ. When the
+    # guest being driven (-VMName / -Guest) has an entry, its CredentialPath,
+    # GuestConsoleUser, Checkpoint and RequireRigId replace the values above;
+    # every other guest uses them as they are.
+    # Guests = @{
+    #     'my-other-guest' = @{
+    #         CredentialPath   = 'C:\vms\my-other-guest\guest.cred.xml'
+    #         GuestConsoleUser = 'otheruser'
+    #         Checkpoint       = 'ready-20261011'
+    #     }
+    # }
 }
