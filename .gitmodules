@@ -1,6 +1,8 @@
 [submodule "third_party/tsduck"]
 	path = third_party/tsduck
 	url = https://github.com/tsduck/tsduck.git
+	update = none
 [submodule "third_party/ffmpeg"]
 	path = third_party/ffmpeg
 	url = https://github.com/FFmpeg/FFmpeg.git
+	update = none

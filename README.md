@@ -382,6 +382,12 @@ script that needs it checks that path (override with `-TsduckBin`) and names
 it in its error if absent. The `third_party/tsduck` submodule is the source,
 kept for provenance.
 
+Neither source submodule is fetched by default: both are `update = none` in
+`.gitmodules`, so `git submodule update --init --recursive` (and so mounting
+the test framework) skips them; together they were most of a 750 MB clone.
+To fetch one anyway: `git submodule update --init --checkout third_party/tsduck`
+(or `third_party/ffmpeg`).
+
 The important one. MPC-HC's `Mpeg2SectionData.cpp` parses far more than PAT and
 PMT, and TSDuck is what lets us produce the rest:
 
