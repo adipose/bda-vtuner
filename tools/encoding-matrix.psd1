@@ -22,6 +22,7 @@
         0x03                              AUDIO_STREAM_MPEG1     BDA_MPA
         0x04                              AUDIO_STREAM_MPEG2     BDA_MPA
         0x81                              AUDIO_STREAM_AC3       BDA_AC3
+        0x87                              AUDIO_STREAM_EAC3_ATSC BDA_EAC3
         0x0F                              AUDIO_STREAM_AAC       BDA_ADTS
         0x11                              AUDIO_STREAM_AAC_LATM  BDA_LATM
         any + AC-3 descriptor 0x6A        AUDIO_STREAM_AC3       BDA_AC3
@@ -799,7 +800,7 @@
         @{
             Id          = 'atsc-h264-eac3-gap'
             File        = 'atsc-h264-eac3-gap.ts'
-            Summary     = 'KNOWN GAP. ATSC E-AC-3 is stream_type 0x87, which MPC-HC does not know, so the audio track vanishes.'
+            Summary     = 'ATSC E-AC-3: bare stream_type 0x87 (ATSC A/53 Part 3), which MPC-HC classifies as AUDIO_STREAM_EAC3_ATSC and BDA_EAC3.'
             Standard    = 'ATSC'
             ServiceId   = 0x0112
             ServiceName = 'VTGAP'
@@ -825,50 +826,11 @@
                 Why        = 'ffmpeg writes no PSIP; MPC-HC reads the MGT and then the TVCT from PID 0x1FFB.'
                 InjectPsip = $true
             }
-            # This entry is expected to fail in MPC-HC and to pass here. The
-            # validator checks the transport stream, not the player, and the
-            # file genuinely carries 0x87, which is correct ATSC A/53 Part 3
-            # signalling for E-AC-3. What is missing is a case for it in
-            # MPC-HC's PES_STREAM_TYPE, which stops at AUDIO_STREAM_AC3_PLUS =
-            # 0x84 (the Blu-ray value). ConvertToDVBType therefore returns
-            # BDA_UNKNOWN, AddStreamInfo is never called, and the service plays
-            # with no audio track offered at all.
-            KnownGap = 'MPC-HC has no PES_STREAM_TYPE for ATSC E-AC-3 (0x87); expect BDA_UNKNOWN and no audio track.'
             Expect = @{
                 PcrRequired = $true
-
-                # Which behaviour the binary has is readable from this entry's
-                # own scan, because the entry generates the 0x87 stream itself.
-                # An absence is only informative against a mux that actually
-                # carried one, which is the condition this entry uniquely meets.
-                #
-                #   audio[] contains pes 135  -> binary classifies 0x87, gap fixed
-                #   audio[] contains no 135   -> ConvertToDVBType returned
-                #                                BDA_UNKNOWN, AddStreamInfo never
-                #                                called, gap present
-                #
-                # Deliberately not keyed on deployedHash. A hash says which build
-                # ran, not what it does; it changes on every rebuild for reasons
-                # unrelated to 0x87, so the table would need updating whenever
-                # anyone compiles and a stale row would silently mislabel a run.
-                # Provenance from the artefact, not from a table maintained
-                # beside it.
-                #
-                # Verified 2026-08-30: absent at fork branch dvb-json-api (5dd8e312f8) and
-                # upstream/develop 9e8db1dc95 (both AUDIO_STREAM_AC3_PLUS = 0x84,
-                # DSUtil/Mpeg2Def.h:67); present only on branch atsc-scan, which
-                # adds AUDIO_STREAM_EAC3_ATSC = 0x87. A routine rebase does not
-                # acquire it.
-                GapDiscriminator = @{
-                    Role    = 'audio'
-                    Field   = 'pes'      # numeric on the wire, the PMT stream_type
-                    Value   = 0x87
-                    Present = 'gap fixed: this build classifies ATSC E-AC-3'
-                    Absent  = 'gap present: the audio track is silently dropped'
-                }
                 Streams = @(
                     @{ Role = 'video'; StreamType = 0x1B; Descriptors = @();     Bda = 'BDA_H264';    Pes = 'VIDEO_STREAM_H264' }
-                    @{ Role = 'audio'; StreamType = 0x87; Descriptors = @(0x0A); Bda = 'BDA_UNKNOWN'; Pes = 'INVALID'; Language = 'eng' }
+                    @{ Role = 'audio'; StreamType = 0x87; Descriptors = @(0x0A); Bda = 'BDA_EAC3';    Pes = 'AUDIO_STREAM_EAC3_ATSC'; Language = 'eng' }
                 )
             }
         }
