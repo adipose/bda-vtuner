@@ -27,12 +27,15 @@
         0x11                              AUDIO_STREAM_AAC_LATM  BDA_LATM
         any + AC-3 descriptor 0x6A        AUDIO_STREAM_AC3       BDA_AC3
         any + enhanced AC-3 desc 0x7A     AUDIO_STREAM_AC3_PLUS  BDA_EAC3
-        any + AAC descriptor 0x7C         AUDIO_STREAM_AAC_LATM  BDA_LATM
+        0x0F/0x11 + AAC descriptor 0x7C   unchanged (ADTS/LATM)  BDA_ADTS/LATM
+        other + AAC descriptor 0x7C       AUDIO_STREAM_AAC_LATM  BDA_LATM
         any + subtitling descriptor 0x59  SUBTITLE_STREAM        BDA_SUBTITLE
 
-    The descriptor cases win: they overwrite pes_stream_type before the lookup,
-    so under DVB signalling the carrier stream_type is 0x06 (PES private data)
-    and the descriptor alone decides the result.
+    The descriptor cases win, except AAC: they overwrite pes_stream_type
+    before the lookup, so under DVB signalling the carrier stream_type is 0x06
+    (PES private data) and the descriptor alone decides the result. The AAC
+    descriptor gives the profile rather than the framing, so it only decides
+    when the stream_type does not already say ADTS or LATM.
 
     Two further descriptors are read in the same loop without changing the
     stream type. They set what the channel list displays, so they get their own
@@ -401,7 +404,7 @@
         @{
             Id          = 'h264-aac-descriptor'
             File        = 'h264-aac-descriptor.ts'
-            Summary     = 'ADTS AAC carrying a DVB AAC descriptor 0x7C, which MPC-HC reclassifies as LATM.'
+            Summary     = 'ADTS AAC (stream_type 0x0F) carrying a DVB AAC descriptor 0x7C, which must stay ADTS.'
             Standard    = 'DVB'
             ServiceId   = 0x010B
             ServiceName = 'VT AACD'
@@ -415,19 +418,55 @@
                 MuxerOptions = @('-mpegts_flags', '+system_b')
             }
             Tsduck = @{
-                # ParsePMT's DT_AAC_AUDIO case sets AUDIO_STREAM_AAC_LATM
-                # unconditionally, so an ADTS stream (0x0F) that also carries
-                # the descriptor is reported as BDA_LATM. EN 300 468 allows the
-                # descriptor on both framings, so real broadcasts reach this.
-                # The entry pins the behaviour down; it does not bless it.
-                Why      = 'ffmpeg never writes the DVB AAC descriptor; this exercises the DT_AAC_AUDIO override.'
+                # The DVB AAC descriptor gives the profile, not the framing, and
+                # EN 300 468 allows it on both, so real broadcasts carry it on
+                # 0x0F (Spanish DTT, clsid2/mpc-hc#4443). Before that fix
+                # ParsePMT's DT_AAC_AUDIO case set AUDIO_STREAM_AAC_LATM
+                # unconditionally, the demux pin was typed LATM, and the
+                # channel had no audio. h264-aac-descriptor-private covers the
+                # case where the descriptor is all there is to go on.
+                Why      = 'ffmpeg never writes the DVB AAC descriptor; this exercises the DT_AAC_AUDIO case.'
                 PatchXml = '<?xml version="1.0" encoding="UTF-8"?><tsduck><PMT><component stream_type="15"><AAC_descriptor x-node="add" profile_and_level="0x50"/></component></PMT></tsduck>'
             }
             Expect = @{
                 PcrRequired = $true
                 Streams = @(
                     @{ Role = 'video'; StreamType = 0x1B; Descriptors = @();           Bda = 'BDA_H264'; Pes = 'VIDEO_STREAM_H264' }
-                    @{ Role = 'audio'; StreamType = 0x0F; Descriptors = @(0x7C, 0x0A); Bda = 'BDA_LATM'; Pes = 'AUDIO_STREAM_AAC_LATM'; Language = 'eng' }
+                    @{ Role = 'audio'; StreamType = 0x0F; Descriptors = @(0x7C, 0x0A); Bda = 'BDA_ADTS'; Pes = 'AUDIO_STREAM_AAC'; Language = 'eng' }
+                )
+            }
+        }
+
+        @{
+            Id          = 'h264-aac-descriptor-private'
+            File        = 'h264-aac-descriptor-private.ts'
+            Summary     = 'AAC as PES private data (stream_type 0x06) with a DVB AAC descriptor 0x7C, classified as LATM.'
+            Standard    = 'DVB'
+            ServiceId   = 0x0116
+            ServiceName = 'VT AACP'
+            ServiceType = 0x19
+            Width       = 1280
+            Height      = 720
+            FFmpeg = @{
+                Video     = @{ Encoder = 'libx264'; Options = @('-preset', 'veryfast', '-b:v', '150k', '-pix_fmt', 'yuv420p') }
+                Audio     = @( @{ Encoder = 'aac'; Language = 'eng'; Options = @() } )
+                Subtitles = @()
+                MuxerOptions = @('-mpegts_flags', '+system_b')
+            }
+            Tsduck = @{
+                # With stream_type 0x06 the descriptor is the only sign the
+                # stream is AAC, and ParsePMT falls back to LATM. The payload
+                # is ADTS, so this pins the classification only; nothing
+                # here decodes it. The guard against the #4443 fix
+                # overreaching and dropping this case to BDA_UNKNOWN.
+                Why      = 'ffmpeg never writes 0x06 for AAC; this is the DT_AAC_AUDIO fallback.'
+                PatchXml = '<?xml version="1.0" encoding="UTF-8"?><tsduck><PMT><component stream_type="15" x-add-stream_type="6"><AAC_descriptor x-node="add" profile_and_level="0x50"/></component></PMT></tsduck>'
+            }
+            Expect = @{
+                PcrRequired = $true
+                Streams = @(
+                    @{ Role = 'video'; StreamType = 0x1B; Descriptors = @();           Bda = 'BDA_H264'; Pes = 'VIDEO_STREAM_H264' }
+                    @{ Role = 'audio'; StreamType = 0x06; Descriptors = @(0x7C, 0x0A); Bda = 'BDA_LATM'; Pes = 'AUDIO_STREAM_AAC_LATM'; Language = 'eng' }
                 )
             }
         }
